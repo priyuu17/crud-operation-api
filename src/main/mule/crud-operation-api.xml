@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="17af6a20-7eca-49a7-905c-43a993cedad1" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="99cb7b41-3d77-4e73-8990-a803f93f7f5e" >
+		<db:generic-connection url="jdbc:postgresql://localhost:5432/postgres" driverClassName="org.postgresql.Driver" user="postgres" password="root" />
+	</db:config>
+	<flow name="GET(Parameterized)" doc:id="4ea09987-77de-4295-acb4-db5c7f9db04d" >
+		<http:listener doc:name="HTTP: GET /students" doc:id="bb76a200-bbd2-406b-9670-0853dc6bf584" config-ref="HTTP_Listener_config" path="/students" allowedMethods="GET"/>
+		<set-variable value="#[attributes.queryParams.fname default '']" doc:name="subject" doc:id="15eaa40b-27f7-478e-8ff7-89b88d8006e2" variableName="fname"/>
+		<choice doc:name="Choice" doc:id="390b7164-88d9-4605-93c8-51c0aa5e4c18" >
+			<when expression="#[vars.fname != '']">
+				<db:select doc:name="Select" doc:id="b4e6d824-cf58-4cec-9456-3658c4a9d472" config-ref="Database_Config">
+					<db:sql ><![CDATA[select * from public.students where fname= :fname]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	fname: vars.subject
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+			<otherwise >
+				<db:select doc:name="Select" doc:id="bfce9d65-0c99-4371-ada8-c4bfa17f18ae" config-ref="Database_Config">
+			<db:sql><![CDATA[Select * from public.students]]></db:sql>
+		</db:select>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="output to json" doc:id="1293d670-f04f-4237-8c50-6f2d6f23aafc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+	id: $.id,
+	firstname: $.firstname,
+	lastname: $.lastname,
+	subject: $.subject
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="POST(Parameterized)" doc:id="b8c83649-4d93-4aeb-bdb4-7e7a12b5b82e" >
+		<http:listener doc:name="HTTP: POST /students" doc:id="1652a811-95d9-41bc-9b0c-b78aa07dbc98" config-ref="HTTP_Listener_config" path="/students" allowedMethods="POST" outputMimeType="application/json"/>
+		<db:insert doc:name="Insert" doc:id="13d97f32-ea94-4220-9afd-c9df3a9de54c" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO public.students(id, firstname, lastname, subject)
+VALUES (:id, :fname, :lname, :sub);]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: payload.'id',
+	fname: payload.'firstname',
+	lname: payload.'lastname',
+	sub: payload.'subject'
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="b39bfcbd-9af8-4adf-8431-40ef7bb71daa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Data added Successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="PATCH(Parameterized)" doc:id="d4284b8a-9593-4aca-aa09-8c7f8d889e63" >
+		<http:listener doc:name="HTTP: PATCH /students" doc:id="96ae220b-3aaf-40a9-9f87-2284b5bc60b4" config-ref="HTTP_Listener_config" path="/students" allowedMethods="PATCH" outputMimeType="application/json"/>
+		<db:update doc:name="Update" doc:id="e98f095f-a235-4c0c-985e-b8962aca84de" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE public.students
+SET firstname=:fname, lastname=:lname, subject=:sub
+WHERE id=:id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: payload.'id',
+	fname: payload.'firstname',
+	lname: payload.'lastname',
+	sub: payload.'subject'
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="75c64568-b2ae-4b6d-9c58-59e43bd2022f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Data updated successfully"
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="DELETE(Parameterized)" doc:id="c84e3a8d-5792-49c9-942e-f5cffab4b69e" >
+		<http:listener doc:name="HTTP: DELETE /students" doc:id="2dbb44a7-04a6-418d-beae-820dc78eb253" config-ref="HTTP_Listener_config" path="/students" allowedMethods="DELETE" outputMimeType="application/json"/>
+		<db:delete doc:name="Delete" doc:id="310e8e63-2e86-453d-b2b8-d0720386d7d1" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM public.students
+	WHERE id=:id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: payload.'id'
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="f1c1669a-399e-4418-927c-2fb62aff4aa9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Data deleted successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="GET(Dynamic)" doc:id="36c62cff-45e4-4f50-af31-c7eab96167d5" >
+		<http:listener doc:name="HTTP: GET /student" doc:id="0e3e9d1f-e835-4002-9e95-35d0583fc2f2" config-ref="HTTP_Listener_config" path="/student" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="a3e72f7f-50c7-4633-9581-f4b39e9018a7" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from public.students where subject = 'Science']]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="21cca4b6-ca1d-4e00-a562-5a0c680c0f13" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+	id: $.id,
+	firstname: $.firstname,
+	lastname: $.lastname,
+	subject: $.subject
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="POST(Dynamic)" doc:id="40e8ba9e-9e87-47e1-962c-52a8d2938d16" >
+		<http:listener doc:name="HTTP: POST /student" doc:id="91925c7b-863d-4bff-9bba-6ed7434b9de9" config-ref="HTTP_Listener_config" path="/student" outputMimeType="application/json" allowedMethods="POST" />
+		<db:insert doc:name="Insert" doc:id="a881db1f-0b51-4b7c-a63b-bc3af09d87f6" config-ref="Database_Config" >
+			<db:sql ><![CDATA[INSERT INTO public.students(id, firstname, lastname, subject)
+VALUES (11, 'Moana', 'Waialiki', 'Arts');]]></db:sql>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="f77ecbfa-1c4b-49bb-9361-5469f4b61e46" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Data added Successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="PATCH(Dynamic)" doc:id="63bafc11-3de0-439e-a696-396e3bdbdd15" >
+		<http:listener doc:name="HTTP: PATCH /student" doc:id="c5acbf20-9c70-4eb6-bac1-53a9d07a8335" config-ref="HTTP_Listener_config" path="/student" outputMimeType="application/json" allowedMethods="PATCH" />
+		<db:update doc:name="Update" doc:id="b0daae67-0836-4ad3-a17c-0a3cf37ddcc8" config-ref="Database_Config" >
+			<db:sql ><![CDATA[UPDATE public.students
+SET firstname='Moana', lastname='Vaiana', subject='Science'
+WHERE id=11;]]></db:sql>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="99bc6e7f-a262-4077-a5f9-b9ba6044c3c9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Data updated successfully"
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="DELETE(Dynamic)" doc:id="68375496-5d8e-403c-b8db-c2e20ef6fca5" >
+		<http:listener doc:name="HTTP: DELETE /student" doc:id="f3748b84-fa6e-44ae-afe4-75d15a811b4c" config-ref="HTTP_Listener_config" path="/student" outputMimeType="application/json" allowedMethods="DELETE" />
+		<db:delete doc:name="Delete" doc:id="053b4bed-096c-40a5-8174-dc03211b4c79" config-ref="Database_Config" >
+			<db:sql ><![CDATA[DELETE FROM public.students
+	WHERE id=11;]]></db:sql>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="ee0c77cd-d512-49b5-95c8-cb58fd35636f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Data deleted successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

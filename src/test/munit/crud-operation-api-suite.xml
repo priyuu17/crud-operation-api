@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="crud-operation-api-suite.xml" />
+	<munit:test name="GET(Parameterized)-test" doc:id="7a9b7035-8448-487d-86cb-6cf64826b65b" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="7895f74c-b10a-40e7-8aa2-a098e104918f" >
+				<munit:payload value="#[readUrl('classpath://GETParameterizedtest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://GETParameterizedtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to GET(Parameterized)" doc:id="c9876121-9c80-4197-b45b-18d5d65d130b" name="GET(Parameterized)"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="b3150e5d-66e3-4082-884f-bd02de582992" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import GETParameterizedtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="POST(Parameterized)-test" doc:id="642725fd-6c47-4a3d-ad08-ac9b897768ab" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="cb8e98e4-4971-4040-8a87-179352041056" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://POSTParameterizedtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://POSTParameterizedtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to POST(Parameterized)" doc:id="3c7f3ad4-d97f-4c28-b03e-ff2bc419a6bf" name="POST(Parameterized)"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="6329ec87-65df-4e91-89ef-b71c771bc250" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import POSTParameterizedtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="PATCH(Parameterized)-test" doc:id="9d6900ef-e45d-4000-92ba-5df07fdf5288" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="a4c80345-c82c-4f82-998e-590cf7387ec0" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://PATCHParameterizedtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://PATCHParameterizedtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to PATCH(Parameterized)" doc:id="8d60a718-c138-41fa-8d2d-b17162a876fc" name="PATCH(Parameterized)"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="7f3006ce-eb36-44f2-9ad6-625e84f3a01d" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import PATCHParameterizedtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="DELETE(Parameterized)-test" doc:id="719b9cc1-0cb8-405c-afd5-b1377da80c50" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Input" doc:id="368719c1-b81d-4889-a3ce-f33038f60184" >
+				<munit:payload value="#[output application/json --- readUrl('classpath://DELETEParameterizedtest\set-event_payload.dwl')]" encoding="UTF-8" mediaType="application/json" />
+				<munit:attributes value="#[readUrl('classpath://DELETEParameterizedtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to DELETE(Parameterized)" doc:id="4da4e0f8-2a9d-4028-9725-5a83d95b4650" name="DELETE(Parameterized)"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="8d6fa7e3-ab34-4a13-badf-8b22569b066e" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import DELETEParameterizedtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
